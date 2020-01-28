@@ -1,47 +1,78 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 
-void* my_turn(void* param) {
-    int *i = (int *)param;
+void *my_turn(void *param) {
+    int *i = (int *) param;
 
-    for(*i = 0; *i < 1000000000; (*i)++){
+    for (*i = 0; *i < 1000000000; (*i)++) {
     }
     return NULL;
 }
 
 int main() {
-    pthread_t my_t, your_t, a_t, b_t;
-
+    time_t begin, end;
     int y, m, a, b;
 
     y = m = b = a = 0;
-    #ifdef __EMSCRIPTEN_PTHREADS__
+    begin = time(NULL);
+//#define __EMSCRIPTEN_PTHREADS__
+//#undef __EMSCRIPTEN_PTHREADS__
+#ifdef __EMSCRIPTEN_PTHREADS__
+    pthread_t my_t, your_t, a_t, b_t;
     printf("Threads ARE supported!!!\n");
 
-    pthread_create(&my_t, NULL, my_turn, &m);
-    pthread_create(&your_t, NULL, my_turn, &y);
-    pthread_create(&a_t, NULL, my_turn, &a);
-    pthread_create(&b_t, NULL, my_turn, &b);
+    if(pthread_create(&my_t, NULL, my_turn, &m)){
+        perror("Thread creation failed");
+        return 1;
+    }
 
-    pthread_join(my_t, NULL);
-    pthread_join(your_t, NULL);
-    pthread_join(a_t, NULL);
-    pthread_join(b_t, NULL);
-    #else
+    if(pthread_create(&your_t, NULL, my_turn, &y)){
+        perror("Thread creation failed");
+        return 1;
+    }
+
+    if(pthread_create(&a_t, NULL, my_turn, &a)){
+        perror("Thread creation failed");
+        return 1;
+    }
+
+    if(pthread_create(&b_t, NULL, my_turn, &b)){
+        perror("Thread creation failed");
+        return 1;
+    }
+
+    if(pthread_join(my_t, NULL)){
+        perror("Thread join failed");
+        return 1;
+    }
+    if(pthread_join(your_t, NULL)){
+        perror("Thread join failed");
+        return 1;
+    }
+    if(pthread_join(a_t, NULL)){
+        perror("Thread join failed");
+        return 1;
+    }
+    if(pthread_join(b_t, NULL)){
+        perror("Thread join failed");
+        return 1;
+    }
+#else
     printf("Threads NOT supported!!!\n");
-    #endif
-//    my_turn(&m);
-//    my_turn(&y);
-//    my_turn(&a);
-//    my_turn(&b);
+    my_turn(&m);
+    my_turn(&y);
+    my_turn(&a);
+    my_turn(&b);
+#endif
 
+    end = time(NULL);
 
     printf("mine value %d\n", m);
     printf("yours value %d\n", y);
     printf("mine value %d\n", a);
     printf("yours value %d\n", b);
-
+    printf("Elapsed time %f\n", difftime(end, begin));
 
     return 0;
 }
